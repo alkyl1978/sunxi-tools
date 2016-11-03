@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012  Henrik Nordstrom <henrik@henriknordstrom.net>
+ * Copyright (C) 2016  Siarhei Siamashka <siarhei.siamashka@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,8 +17,9 @@
 
 SECTIONS
 {
-	. = 0x40007000;
-	.text : { *(.text) }
+	. = 0x0000;
+	.start    : { *(.start) }
+	.text     : { *(.text) }
 	/DISCARD/ : { *(.dynstr*) }
 	/DISCARD/ : { *(.dynamic*) }
 	/DISCARD/ : { *(.plt*) }

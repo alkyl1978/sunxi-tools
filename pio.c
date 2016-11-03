@@ -17,9 +17,6 @@
  * MA 02111-1307 USA
  */
 
-/* needs _BSD_SOURCE for htole and letoh  */
-#define _BSD_SOURCE
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -27,12 +24,15 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <sys/mman.h>
+#ifndef NO_MMAP
+  #include <sys/mman.h>
+#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#include "endian_compat.h"
+#include "common.h"
+#include "portable_endian.h"
 
 #define PIO_REG_SIZE 0x228 /*0x300*/
 #define PIO_PORT_SIZE 0x24
@@ -167,7 +167,7 @@ static const char *argv0;
 
 static void usage(int rc )
 {
-
+	fputs("sunxi-pio " VERSION "\n\n", stderr);
 	fprintf(stderr, "usage: %s -m|-i input [-o output] pin..\n", argv0);
 	fprintf(stderr," -m				mmap - read pin state from system\n");
 	fprintf(stderr," -i				read pin state from file\n");
@@ -313,7 +313,7 @@ static void cmd_clean(char *buf)
 	}
 }
 
-static int do_command(char *buf, const char **args, int argc)
+static int do_command(char *buf, const char **args, int UNUSED(argc))
 {
 	const char *command = args[0];
 	if (*command == 'P') {
@@ -367,6 +367,10 @@ int main(int argc, char **argv)
 	if (!in_name && !do_mmap)
 		usage(1);
 	if (do_mmap) {
+#ifdef NO_MMAP
+		errno = ENOSYS; /* Function not implemented */
+		perror("mmap PIO");
+#else
 		int pagesize = sysconf(_SC_PAGESIZE);
 		int fd = open("/dev/mem",O_RDWR);
 		int addr = 0x01c20800 & ~(pagesize-1);
@@ -382,6 +386,7 @@ int main(int argc, char **argv)
 		}
 		close(fd);
 		buf += offset;
+#endif
 	}
 	if (in_name) {
 		if (strcmp(in_name, "-") == 0) {

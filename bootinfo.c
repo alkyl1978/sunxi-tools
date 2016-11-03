@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "common.h"
 #include "types.h"
 
 /* boot_file_head copied from mksunxiboot */
@@ -197,7 +198,7 @@ void print_boot_file_head(boot_file_head_t *hdr)
 
 void print_boot_dram_para(boot_dram_para_t *dram)
 {
-	pprintf(&dram->dram_baseaddr,	"DRAM base : %p\n", (void *)(long)dram->dram_baseaddr);
+	pprintf(&dram->dram_baseaddr,	"DRAM base : %p\n", (void *)(uintptr_t)dram->dram_baseaddr);
 	pprintf(&dram->dram_clk,	"DRAM clk  : %d\n", dram->dram_clk);
 	pprintf(&dram->dram_type,	"DRAM type : %d\n", dram->dram_type);
 	pprintf(&dram->dram_rank_num,	"DRAM rank : %d\n", dram->dram_rank_num);
@@ -271,7 +272,7 @@ void print_boot0_private_head(boot0_private_head_t *hdr, loader_type type)
 	printf("\n");
 }
 
-void print_script(void *script)
+void print_script(void *UNUSED(script))
 {
 }
 
@@ -335,6 +336,13 @@ void print_boot1_file_head(boot1_file_head_t *hdr, loader_type type)
 		printf("Unknown boot0 header version\n");
 }
 
+static void usage(const char *cmd)
+{
+	puts("sunxi-bootinfo " VERSION "\n");
+	printf("Usage: %s [<filename>]\n", cmd);
+	printf("       With no <filename> given, will read from stdin instead\n");
+}
+
 int main(int argc, char * argv[])
 {
 	FILE *in = stdin;
@@ -351,8 +359,11 @@ int main(int argc, char * argv[])
 	}
 	if (argc > 1) {
 		in = fopen(argv[1], "rb");
-		if (!in)
-			fail("open input: ");
+		if (!in) {
+			if (*argv[1] == '-')
+				usage(argv[0]);
+			fail("open input");
+		}
 	}
 	int len;
 

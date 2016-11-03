@@ -15,15 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/* Needs _BSD_SOURCE for htole and letoh  */
-#define _BSD_SOURCE
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "endian_compat.h"
+#include "common.h"
+#include "portable_endian.h"
 
 struct phoenix_ptable {
 	char signature[16];		/* "PHOENIX_CARD_IMG" */
@@ -43,7 +41,7 @@ static int save_part(struct phoenix_ptable *ptable, int part, const char *dest, 
 {
 	int l = strlen(dest) + 16;
 	char outname[l];
-	FILE *out;
+	FILE *out = stdout;
 	char *buf = NULL;
 	int ret = 0;
 	snprintf(outname, l, dest, part);
@@ -56,8 +54,6 @@ static int save_part(struct phoenix_ptable *ptable, int part, const char *dest, 
 		goto err;
 	if (strcmp(outname, "-") != 0)
 		out = fopen(outname, "wb");
-	else
-		out = stdout;
 	if (!out)
 		goto err;
 	if (fseek(in, ptable->part[part].start * 0x200, SEEK_SET) == -1)
@@ -81,6 +77,7 @@ err:
 
 static void usage(char **argv)
 {
+	puts("phoenix-info " VERSION "\n");
 	printf("Usage: %s [options] [phoenix_image]\n"
 		"	-v	verbose\n"
 		"	-q	quiet\n"
